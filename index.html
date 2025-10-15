@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nuvei SimplyConnect 2.0 Interactive Demo</title>
+  <script src="https://cdn.safecharge.com/simplyconnect/v2/simplyconnect.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    .hidden { display: none; }
+    input, select, button { padding: 0.5em; font-size: 1em; margin: 0.5em 0; }
+    pre { background: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; }
+    #card-element { margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h2>Nuvei SimplyConnect 2.0 Interactive Sandbox</h2>
+
+  <!-- Step 1: Initialization -->
+  <section id="init-section">
+    <h3>Step 1: Initialize SimplyConnect</h3>
+    <p>Enter a valid <code>sessionToken</code> (obtained from your backend or test environment):</p>
+    <input type="text" id="sessionToken" placeholder="Enter session token" size="60" />
+    <br />
+    <input type="text" id="merchantId" placeholder="Merchant ID" value="REPLACE_WITH_YOUR_MERCHANT_ID" size="40" />
+    <br />
+    <button id="initBtn">Initialize SimplyConnect()</button>
+    <pre id="initResult"></pre>
+  </section>
+
+  <!-- Step 2: Method Runner -->
+  <section id="method-section" class="hidden">
+    <h3>Step 2: Test SimplyConnect Methods</h3>
+
+    <label>Select a method:</label><br />
+    <select id="method">
+      <option value="getPaymentOptions">getPaymentOptions()</option>
+      <option value="getBuyerPaymentTokens">getBuyerPaymentTokens()</option>
+      <option value="submitPayment">submitPayment()</option>
+      <option value="createPaymentToken">createPaymentToken()</option>
+      <option value="getTempToken">getTempToken()</option>
+      <option value="setOpenAmount">setOpenAmount()</option>
+      <option value="deletePaymentToken">deletePaymentToken()</option>
+      <option value="applyOverlay">applyOverlay()</option>
+      <option value="removeOverlay">removeOverlay()</option>
+      <option value="destroy">destroy()</option>
+    </select>
+    <br />
+    <button id="runMethodBtn">Run</button>
+
+    <div id="card-element"></div>
+    <pre id="result"></pre>
+  </section>
+
+  <script>
+    let simplyConnect = null;
+
+    const initBtn = document.getElementById("initBtn");
+    const runBtn = document.getElementById("runMethodBtn");
+    const initSection = document.getElementById("init-section");
+    const methodSection = document.getElementById("method-section");
+    const resultEl = document.getElementById("result");
+
+    // --- Step 1: Initialize SimplyConnect() ---
+    initBtn.addEventListener("click", async () => {
+      const sessionToken = document.getElementById("sessionToken").value.trim();
+      const merchantId = document.getElementById("merchantId").value.trim();
+      const initResult = document.getElementById("initResult");
+
+      if (!sessionToken || !merchantId) {
+        initResult.textContent = "❌ Please enter both sessionToken and merchantId.";
+        return;
+      }
+
+      try {
+        simplyConnect = SimplyConnect.init({
+          env: "int", // integration env
+          sessionToken,
+          merchantId,
+          country: "SG",
+          currency: "SGD",
+          amount: 10.00,
+        });
+
+        // If init is successful, mount card element
+        simplyConnect.createPaymentFields({
+          type: "card",
+          container: "#card-element",
+          style: { base: { fontSize: "16px", color: "#333" } },
+        });
+
+        initResult.textContent = "✅ SimplyConnect initialized successfully.";
+        initSection.classList.add("hidden");
+        methodSection.classList.remove("hidden");
+      } catch (err) {
+        initResult.textContent = "❌ Initialization failed: " + err.message;
+      }
+    });
+
+    // --- Step 2: Run selected SimplyConnect method ---
+    runBtn.addEventListener("click", async () => {
+      const method = document.getElementById("method").value;
+      resultEl.textContent = `Running ${method}...`;
+
+      if (!simplyConnect) {
+        resultEl.textContent = "❌ SimplyConnect not initialized yet.";
+        return;
+      }
+
+      try {
+        let response;
+        switch (method) {
+          case "getPaymentOptions":
+            response = await simplyConnect.getPaymentOptions();
+            break;
+          case "getBuyerPaymentTokens":
+            response = await simplyConnect.getBuyerPaymentTokens();
+            break;
+          case "submitPayment":
+            response = await simplyConnect.submitPayment();
+            break;
+          case "createPaymentToken":
+            response = await simplyConnect.createPaymentToken();
+            break;
+          case "getTempToken":
+            response = await simplyConnect.getTempToken();
+            break;
+          case "setOpenAmount":
+            response = await simplyConnect.setOpenAmount(15.00); // Example new amount
+            break;
+          case "deletePaymentToken":
+            response = await simplyConnect.deletePaymentToken("REPLACE_WITH_TOKEN_ID");
+            break;
+          case "applyOverlay":
+            response = simplyConnect.applyOverlay();
+            break;
+          case "removeOverlay":
+            response = simplyConnect.removeOverlay();
+            break;
+          case "destroy":
+            response = simplyConnect.destroy();
+            break;
+          default:
+            response = "Unknown method.";
+        }
+
+        resultEl.textContent = JSON.stringify(response, null, 2);
+      } catch (err) {
+        resultEl.textContent = "❌ Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
