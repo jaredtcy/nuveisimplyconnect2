@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Nuvei SimplyConnect 2.0 Interactive Demo</title>
 
-  <!-- ✅ Correct and updated SDK URL -->
+  <!-- Correct SDK URL -->
   <script src="https://cdn.nuvei.com/simplyconnect/v2/simplyconnect.js"></script>
 
   <style>
@@ -20,8 +20,8 @@
   <!-- Step 1: Initialize -->
   <section id="init-section">
     <h3>Step 1: Initialize SimplyConnect()</h3>
-    <p>Paste a valid <code>sessionToken</code> (from your backend /openOrder call):</p>
-    <input type="text" id="sessionToken" placeholder="Enter session token" size="60" />
+    <p>Paste a valid <code>sessionId</code> (from your backend POST /orders request):</p>
+    <input type="text" id="sessionId" placeholder="Enter sessionId" size="60" />
     <br />
     <button id="initBtn">Initialize SimplyConnect()</button>
     <pre id="initResult"></pre>
@@ -29,12 +29,12 @@
 
   <!-- Step 2: Method testing -->
   <section id="method-section">
-    <h3>Step 2: Run SimplyConnect Methods</h3>
+    <h3>Step 2: Test SimplyConnect Methods</h3>
     <label>Select a method:</label><br />
     <select id="method">
+      <option value="submitPayment">submitPayment()</option>
       <option value="getPaymentOptions">getPaymentOptions()</option>
       <option value="getBuyerPaymentTokens">getBuyerPaymentTokens()</option>
-      <option value="submitPayment">submitPayment()</option>
       <option value="createPaymentToken">createPaymentToken()</option>
       <option value="getTempToken">getTempToken()</option>
       <option value="setOpenAmount">setOpenAmount()</option>
@@ -46,12 +46,12 @@
     <br />
     <button id="runMethodBtn">Run</button>
 
-    <div id="card-element"></div>
+    <div id="root"></div>
     <pre id="result"></pre>
   </section>
 
   <script>
-    let simplyConnect = null;
+    let sdkInstance = null;
 
     const initBtn = document.getElementById("initBtn");
     const runBtn = document.getElementById("runMethodBtn");
@@ -59,30 +59,34 @@
     const methodSection = document.getElementById("method-section");
     const resultEl = document.getElementById("result");
 
-    // --- Step 1: Initialize SimplyConnect ---
-    initBtn.addEventListener("click", async () => {
-      const sessionToken = document.getElementById("sessionToken").value.trim();
+    // Step 1: Initialize SimplyConnect
+    initBtn.addEventListener("click", () => {
+      const sessionId = document.getElementById("sessionId").value.trim();
       const initResult = document.getElementById("initResult");
 
-      if (!sessionToken) {
-        initResult.textContent = "❌ Please enter a valid sessionToken.";
+      if (!sessionId) {
+        initResult.textContent = "❌ Please enter a valid sessionId.";
         return;
       }
 
       try {
-        simplyConnect = SimplyConnect.init({
+        sdkInstance = window.simplyConnect({
           env: "int", // integration environment
-          sessionToken,
-          country: "SG",
-          currency: "SGD",
-          amount: 10.00
-        });
-
-        // Mount card element for payment-related methods
-        simplyConnect.createPaymentFields({
-          type: "card",
-          container: "#card-element",
-          style: { base: { fontSize: "16px", color: "#333" } }
+          renderTo: "#root",
+          sessionId: sessionId,
+          eventCallbacks: {
+            onResult: function(result) {
+              console.log("SDK onResult:", result);
+              resultEl.textContent = JSON.stringify(result, null, 2);
+            },
+            onError: function(err) {
+              console.error("SDK onError:", err);
+              resultEl.textContent = "❌ Error: " + JSON.stringify(err, null, 2);
+            }
+          },
+          uiConfig: {
+            countryCode: "SG",
+          }
         });
 
         initResult.textContent = "✅ SimplyConnect initialized successfully.";
@@ -93,12 +97,12 @@
       }
     });
 
-    // --- Step 2: Run chosen SimplyConnect method ---
+    // Step 2: Run methods
     runBtn.addEventListener("click", async () => {
       const method = document.getElementById("method").value;
       resultEl.textContent = `Running ${method}...`;
 
-      if (!simplyConnect) {
+      if (!sdkInstance) {
         resultEl.textContent = "❌ SimplyConnect not initialized yet.";
         return;
       }
@@ -106,40 +110,39 @@
       try {
         let response;
         switch (method) {
+          case "submitPayment":
+            response = await sdkInstance.submitPayment();
+            break;
           case "getPaymentOptions":
-            response = await simplyConnect.getPaymentOptions();
+            response = await sdkInstance.getPaymentOptions();
             break;
           case "getBuyerPaymentTokens":
-            response = await simplyConnect.getBuyerPaymentTokens();
-            break;
-          case "submitPayment":
-            response = await simplyConnect.submitPayment();
+            response = await sdkInstance.getBuyerPaymentTokens();
             break;
           case "createPaymentToken":
-            response = await simplyConnect.createPaymentToken();
+            response = await sdkInstance.createPaymentToken();
             break;
           case "getTempToken":
-            response = await simplyConnect.getTempToken();
+            response = await sdkInstance.getTempToken();
             break;
           case "setOpenAmount":
-            response = await simplyConnect.setOpenAmount(15.00); // Example amount
+            response = await sdkInstance.setOpenAmount(15.00);
             break;
           case "deletePaymentToken":
-            response = await simplyConnect.deletePaymentToken("REPLACE_WITH_TOKEN_ID");
+            response = await sdkInstance.deletePaymentToken("REPLACE_WITH_TOKEN_ID");
             break;
           case "applyOverlay":
-            response = simplyConnect.applyOverlay();
+            response = sdkInstance.applyOverlay();
             break;
           case "removeOverlay":
-            response = simplyConnect.removeOverlay();
+            response = sdkInstance.removeOverlay();
             break;
           case "destroy":
-            response = simplyConnect.destroy();
+            response = sdkInstance.destroy();
             break;
           default:
             response = "Unknown method.";
         }
-
         resultEl.textContent = JSON.stringify(response, null, 2);
       } catch (err) {
         resultEl.textContent = "❌ Error: " + err.message;
