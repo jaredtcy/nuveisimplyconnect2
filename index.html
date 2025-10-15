@@ -56,31 +56,39 @@
             onResult: function(result) {
               console.log("Transaction Result:", result);
 
-              // Hide the default SimplyConnect blue screen
+              // If sessionId is invalid or result is missing
+              if (!result || !result.result || !result.result.status) {
+                initResult.textContent = "❌ Payment failed: invalid sessionId or session expired.";
+                simplyConnectContainer.style.display = "none";
+                transactionResult.textContent = "No transaction due to invalid session.";
+                return;
+              }
+
+              // Normal successful flow
               simplyConnectContainer.style.display = "none";
-
-              // Display transaction JSON directly on page
               transactionResult.textContent = JSON.stringify(result, null, 2);
-
-              // Optional: update initResult for status
-              initResult.textContent = `✅ Payment process completed. Status: ${result.result?.status || 'unknown'}`;
+              initResult.textContent = `✅ Payment process completed. Status: ${result.result.status}`;
             },
             onError: function(error) {
               console.error("Payment Error:", error);
-              initResult.textContent = "❌ Error: " + JSON.stringify(error, null, 2);
+              initResult.textContent = "❌ Error during initialization or payment: " + 
+                                        (error?.reason || JSON.stringify(error));
+              simplyConnectContainer.style.display = "none";
+              transactionResult.textContent = "No transaction due to error.";
             }
           },
           uiConfig: {
             countryCode: "US",
             locale: "en",
-            textDirection: "ltr",
-            // showPostPaymentScreen: false // optional if your SDK version supports it
+            textDirection: "ltr"
           }
         });
 
-        initResult.textContent = "✅ Simply Connect initialized successfully. Payment form should appear below.";
+        initResult.textContent = "✅ Simply Connect initialized successfully. Payment form should appear above.";
       } catch (err) {
         initResult.textContent = "❌ Initialization failed: " + err.message;
+        simplyConnectContainer.style.display = "none";
+        transactionResult.textContent = "No transaction due to initialization error.";
       }
     });
   </script>
