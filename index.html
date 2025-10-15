@@ -2,150 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Nuvei SimplyConnect 2.0 Interactive Demo</title>
+  <title>Nuvei Simply Connect 2.0 Demo</title>
 
-  <!-- Correct SDK URL -->
-  <script src="https://cdn.nuvei.com/simplyconnect/v2/simplyconnect.js"></script>
+  <!-- Step B: Import the SimplyConnect.js library -->
+  <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk//simplyConnect_v2.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; }
-    input, select, button { padding: 0.5em; font-size: 1em; margin: 0.5em 0; }
+    input, button { padding: 0.5em; font-size: 1em; margin: 0.5em 0; }
+    #simplyConnect { width: 400px; height: 600px; border: 1px solid #d3dce6; margin-top: 1em; }
     pre { background: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; }
-    #method-section { display: none; }
   </style>
 </head>
 <body>
-  <h2>Nuvei SimplyConnect 2.0 Interactive Sandbox</h2>
+  <h2>Nuvei Simply Connect 2.0 Demo</h2>
 
-  <!-- Step 1: Initialize -->
-  <section id="init-section">
-    <h3>Step 1: Initialize SimplyConnect()</h3>
-    <p>Paste a valid <code>sessionId</code> (from your backend POST /orders request):</p>
-    <input type="text" id="sessionId" placeholder="Enter sessionId" size="60" />
-    <br />
-    <button id="initBtn">Initialize SimplyConnect()</button>
-    <pre id="initResult"></pre>
-  </section>
+  <!-- Step B: Placeholder for Simply Connect Payment Form -->
+  <p>Paste your <code>sessionId</code> from the POST /orders API:</p>
+  <input type="text" id="sessionId" placeholder="Enter sessionId" size="60" />
+  <button id="initBtn">Initialize Simply Connect</button>
+  <pre id="initResult"></pre>
 
-  <!-- Step 2: Method testing -->
-  <section id="method-section">
-    <h3>Step 2: Test SimplyConnect Methods</h3>
-    <label>Select a method:</label><br />
-    <select id="method">
-      <option value="submitPayment">submitPayment()</option>
-      <option value="getPaymentOptions">getPaymentOptions()</option>
-      <option value="getBuyerPaymentTokens">getBuyerPaymentTokens()</option>
-      <option value="createPaymentToken">createPaymentToken()</option>
-      <option value="getTempToken">getTempToken()</option>
-      <option value="setOpenAmount">setOpenAmount()</option>
-      <option value="deletePaymentToken">deletePaymentToken()</option>
-      <option value="applyOverlay">applyOverlay()</option>
-      <option value="removeOverlay">removeOverlay()</option>
-      <option value="destroy">destroy()</option>
-    </select>
-    <br />
-    <button id="runMethodBtn">Run</button>
-
-    <div id="root"></div>
-    <pre id="result"></pre>
-  </section>
+  <!-- Payment form container -->
+  <div id="simplyConnect">
+    <p>Simply Connect payment form will render here.</p>
+  </div>
 
   <script>
-    let sdkInstance = null;
-
     const initBtn = document.getElementById("initBtn");
-    const runBtn = document.getElementById("runMethodBtn");
-    const initSection = document.getElementById("init-section");
-    const methodSection = document.getElementById("method-section");
-    const resultEl = document.getElementById("result");
+    const initResult = document.getElementById("initResult");
 
-    // Step 1: Initialize SimplyConnect
     initBtn.addEventListener("click", () => {
       const sessionId = document.getElementById("sessionId").value.trim();
-      const initResult = document.getElementById("initResult");
-
       if (!sessionId) {
         initResult.textContent = "❌ Please enter a valid sessionId.";
         return;
       }
 
       try {
-        sdkInstance = window.simplyConnect({
-          env: "int", // integration environment
-          renderTo: "#root",
+        // Step C: Instantiate Simply Connect 2.0
+        window.simplyConnect({
+          env: 'int',               // "prod" for production
+          renderTo: "#simplyConnect",
           sessionId: sessionId,
           eventCallbacks: {
             onResult: function(result) {
-              console.log("SDK onResult:", result);
-              resultEl.textContent = JSON.stringify(result, null, 2);
+              console.log("Payment Result:", result);
+              initResult.textContent = JSON.stringify(result, null, 2);
             },
-            onError: function(err) {
-              console.error("SDK onError:", err);
-              resultEl.textContent = "❌ Error: " + JSON.stringify(err, null, 2);
+            onError: function(error) {
+              console.error("Payment Error:", error);
+              initResult.textContent = "❌ Error: " + JSON.stringify(error, null, 2);
             }
           },
           uiConfig: {
-            countryCode: "SG",
+            countryCode: "US",
+            locale: "en",
+            textDirection: "ltr"
           }
         });
 
-        initResult.textContent = "✅ SimplyConnect initialized successfully.";
-        initSection.style.display = "none";
-        methodSection.style.display = "block";
+        initResult.textContent = "✅ Simply Connect initialized successfully. Payment form should appear above.";
       } catch (err) {
         initResult.textContent = "❌ Initialization failed: " + err.message;
-      }
-    });
-
-    // Step 2: Run methods
-    runBtn.addEventListener("click", async () => {
-      const method = document.getElementById("method").value;
-      resultEl.textContent = `Running ${method}...`;
-
-      if (!sdkInstance) {
-        resultEl.textContent = "❌ SimplyConnect not initialized yet.";
-        return;
-      }
-
-      try {
-        let response;
-        switch (method) {
-          case "submitPayment":
-            response = await sdkInstance.submitPayment();
-            break;
-          case "getPaymentOptions":
-            response = await sdkInstance.getPaymentOptions();
-            break;
-          case "getBuyerPaymentTokens":
-            response = await sdkInstance.getBuyerPaymentTokens();
-            break;
-          case "createPaymentToken":
-            response = await sdkInstance.createPaymentToken();
-            break;
-          case "getTempToken":
-            response = await sdkInstance.getTempToken();
-            break;
-          case "setOpenAmount":
-            response = await sdkInstance.setOpenAmount(15.00);
-            break;
-          case "deletePaymentToken":
-            response = await sdkInstance.deletePaymentToken("REPLACE_WITH_TOKEN_ID");
-            break;
-          case "applyOverlay":
-            response = sdkInstance.applyOverlay();
-            break;
-          case "removeOverlay":
-            response = sdkInstance.removeOverlay();
-            break;
-          case "destroy":
-            response = sdkInstance.destroy();
-            break;
-          default:
-            response = "Unknown method.";
-        }
-        resultEl.textContent = JSON.stringify(response, null, 2);
-      } catch (err) {
-        resultEl.textContent = "❌ Error: " + err.message;
       }
     });
   </script>
