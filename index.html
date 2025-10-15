@@ -4,20 +4,20 @@
   <meta charset="UTF-8" />
   <title>Nuvei Simply Connect 2.0 Demo</title>
 
-  <!-- Step B: Import the SimplyConnect.js library -->
+  <!-- SimplyConnect.js library -->
   <script src="https://cdn.safecharge.com/safecharge_resources/v1/websdk//simplyConnect_v2.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; }
     input, button { padding: 0.5em; font-size: 1em; margin: 0.5em 0; }
     #simplyConnect { width: 400px; height: 600px; border: 1px solid #d3dce6; margin-top: 1em; }
-    pre { background: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; }
+    pre { background: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+    #resultContainer { margin-top: 2em; }
   </style>
 </head>
 <body>
   <h2>Nuvei Simply Connect 2.0 Demo</h2>
 
-  <!-- Step B: Placeholder for Simply Connect Payment Form -->
   <p>Paste your <code>sessionId</code> from the POST /orders API:</p>
   <input type="text" id="sessionId" placeholder="Enter sessionId" size="60" />
   <button id="initBtn">Initialize Simply Connect</button>
@@ -28,9 +28,17 @@
     <p>Simply Connect payment form will render here.</p>
   </div>
 
+  <!-- Transaction result -->
+  <div id="resultContainer">
+    <h3>Transaction Result:</h3>
+    <pre id="transactionResult">No transaction yet.</pre>
+  </div>
+
   <script>
     const initBtn = document.getElementById("initBtn");
     const initResult = document.getElementById("initResult");
+    const transactionResult = document.getElementById("transactionResult");
+    const simplyConnectContainer = document.getElementById("simplyConnect");
 
     initBtn.addEventListener("click", () => {
       const sessionId = document.getElementById("sessionId").value.trim();
@@ -40,15 +48,22 @@
       }
 
       try {
-        // Step C: Instantiate Simply Connect 2.0
         window.simplyConnect({
-          env: 'int',               // "prod" for production
+          env: 'int', // "prod" for production
           renderTo: "#simplyConnect",
           sessionId: sessionId,
           eventCallbacks: {
             onResult: function(result) {
-              console.log("Payment Result:", result);
-              initResult.textContent = JSON.stringify(result, null, 2);
+              console.log("Transaction Result:", result);
+
+              // Hide the default SimplyConnect blue screen
+              simplyConnectContainer.style.display = "none";
+
+              // Display transaction JSON directly on page
+              transactionResult.textContent = JSON.stringify(result, null, 2);
+
+              // Optional: update initResult for status
+              initResult.textContent = `✅ Payment process completed. Status: ${result.result?.status || 'unknown'}`;
             },
             onError: function(error) {
               console.error("Payment Error:", error);
@@ -58,7 +73,8 @@
           uiConfig: {
             countryCode: "US",
             locale: "en",
-            textDirection: "ltr"
+            textDirection: "ltr",
+            // showPostPaymentScreen: false // optional if your SDK version supports it
           }
         });
 
