@@ -43,7 +43,7 @@
     initBtn.addEventListener("click", () => {
       const sessionId = document.getElementById("sessionId").value.trim();
       if (!sessionId) {
-        initResult.textContent = "❌ Please enter a valid sessionId.";
+        initResult.textContent = "Please enter a valid sessionId.";
         return;
       }
 
@@ -58,7 +58,7 @@
 
               // If sessionId is invalid or result is missing
               if (!result || !result.result || !result.result.status) {
-                initResult.textContent = "❌ Payment failed: invalid sessionId or session expired.";
+                initResult.textContent = "Payment failed: invalid sessionId or session expired.";
                 simplyConnectContainer.style.display = "none";
                 transactionResult.textContent = "No transaction due to invalid session.";
                 return;
@@ -67,11 +67,11 @@
               // Normal successful flow
               simplyConnectContainer.style.display = "none";
               transactionResult.textContent = JSON.stringify(result, null, 2);
-              initResult.textContent = `✅ Payment process completed. Status: ${result.result.status}`;
+              initResult.textContent = `Payment process completed. Status: ${result.result.status}`;
             },
             onError: function(error) {
               console.error("Payment Error:", error);
-              initResult.textContent = "❌ Error during initialization or payment: " + 
+              initResult.textContent = "Error during initialization or payment: " + 
                                         (error?.reason || JSON.stringify(error));
               simplyConnectContainer.style.display = "none";
               transactionResult.textContent = "No transaction due to error.";
@@ -84,9 +84,9 @@
           }
         });
 
-        initResult.textContent = "✅ Simply Connect initialized successfully. Payment form should appear below.";
+        initResult.textContent = "Simply Connect initialized successfully. Payment form should appear below.";
       } catch (err) {
-        initResult.textContent = "❌ Initialization failed: " + err.message;
+        initResult.textContent = "Initialization failed: " + err.message;
         simplyConnectContainer.style.display = "none";
         transactionResult.textContent = "No transaction due to initialization error.";
       }
